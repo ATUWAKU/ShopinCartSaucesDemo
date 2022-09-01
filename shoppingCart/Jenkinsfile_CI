@@ -1,0 +1,37 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Descarga de Fuentes') {
+            steps {
+				echo 'Incia Pipeline'
+                echo 'Descarga Repositorio'
+                checkout([$class: 'GitSCM', branches: [[name: '*/trunk']], extensions: [], userRemoteConfigs: [[credentialsId: 'GitHubAtuwaku', url: 'https://github.com/ATUWAKU/ShopinCartSaucesDemo.git']]])
+				echo 'Termina Descarga Repositorio'
+            }
+        }
+		stage('Compilacion') {
+            steps {				
+                echo 'Incia Compilacion'
+                echo 'Comando Clean'
+				bat 'gradlew clean'
+				echo 'Termina Comando Clean'
+				echo 'Comando Build -x test'
+				bat 'gradlew build -x test'
+				echo 'Termina Comando Build -x test'
+            }			
+        }
+		stage('Analisis estatico de codigo') {
+            steps {
+				echo 'Inicia Análisis de Código Estático'
+				withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
+					echo 'Incia Analisis estatico'                
+					bat 'gradlew sonarqube'				
+					echo 'Termina Analisis estatico'
+				}
+                echo 'Termina Análisis de Código Estático'
+				echo 'Termina Pipeline'
+            }			
+        }
+    }
+}
